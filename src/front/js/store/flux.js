@@ -1,47 +1,67 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			URLAPI: "https://3001-4geeksacade-reactflaskh-iv9fbvq611n.ws-eu47.gitpod.io/api/",
+			userinfo: {}
+
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
-			},
 
-			getMessage: () => {
-				// fetching data from the backend
-				fetch(process.env.BACKEND_URL + "/api/hello")
-					.then(resp => resp.json())
-					.then(data => setStore({ message: data.message }))
-					.catch(error => console.log("Error loading message from backend", error));
-			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
-
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
+			logIn: async (user) => {
+				const response = await fetch(getStore().URLAPI + "login", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Accept: "application/json",
+					},
+					body: JSON.stringify(user),
 				});
+				if (response.status == 200) {
+					const data = await response.json();
+					localStorage.setItem("token", data.token);
+					localStorage.setItem("logIn", true);
+					return true;
+				} else {
+					alert("Contraseña o usuario incorrectos");
+					return false;
+				}
+			},
+			signUp: async (user) => {
+				const response = await fetch(getStore().URLAPI + "signup", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Accept: "application/json",
+					},
+					body: JSON.stringify(user),
+				});
+				if (response.status == 201) {
+					const data = await response.json();
+					localStorage.setItem("token", data.token);
 
-				//reset the global store
-				setStore({ demo: demo });
-			}
+
+					return true;
+				} else {
+					alert("No se ha podido realizar el registro");
+					return false;
+				}
+			},
+			logOut: () => {
+				localStorage.removeItem("logIn");
+				localStorage.removeItem("token");
+			},
+			getUserInfo: async () => {
+				const response = await fetch(getStore().URLAPI + "infouser", {
+					headers: {
+						"Content-Type": "application/json",
+						Accept: "application/json",
+						Authorization: `Bearer ${localStorage.getItem("token")}`,
+					},
+				});
+				const data = await response.json();
+				setStore({ userinfo: data.results });
+			},
+
 		}
 	};
 };
